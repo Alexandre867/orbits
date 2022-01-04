@@ -1,6 +1,10 @@
 # orbits
 Repository for orbit programs and stuff
 
-I wonder if LaTeX work here: \(frac{1}{2}\)
+## Python
+Main file: orbits.py
 
-Nope :(
+## Matlab
+Main files: orbit.m, space.m
+
+(orbit.m depends on space.m)
