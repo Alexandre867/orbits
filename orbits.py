@@ -998,7 +998,7 @@ class space:
         idmin=0
 
         ## Initial
-        output.loc[0]=['Initial',o1.f,0,0,o1]
+        output.loc[0]=['Initial',o1.f,'00:00:00',0,o1]
         ## Inclination
         if not all(np.isclose([o1.i,o1.Omega],[o2.i,o2.Omega])): # No inclination calculations if already on same plane.
             ## Inclination
@@ -1012,8 +1012,8 @@ class space:
                 output = output.append({'step':'Incl nml+'},ignore_index=True)
                 f1,f2=f2,f1
             output['f'].iloc[[-2,-1]]=[f1,f2]
-            output['time'].iloc[-2]="%02d:%02d:%05.2f" %s2hms((o1.copy().update(f=f1).M-o1.M)%360/360*o1.P+output['time'].iloc[-3])
-            output['time'].iloc[-1]="%02d:%02d:%05.2f" %s2hms((o1.copy().update(f=f2).M-o1.M)%360/360*o1.P+output['time'].iloc[-3])
+            output['time'].iloc[-2]="%02d:%02d:%05.2f" %s2hms((o1.copy().update(f=f1).M-o1.M)%360/360*o1.P+hms2s(*list(map(float,output['time'].loc[idmin].split(':')))))
+            output['time'].iloc[-1]="%02d:%02d:%05.2f" %s2hms((o1.copy().update(f=f2).M-o1.M)%360/360*o1.P+hms2s(*list(map(float,output['time'].loc[idmin].split(':')))))
             o3 = space().trans_orb_plane(o1,o2).update(f=f1)
             if direct_incl: output['deltaV'].iloc[-2]=o3.V-o1.copy().update(f=f1).V
             else: output['deltaV'].iloc[-2]=norm(o3.V)*ang_bet(o3.V,o1.copy().update(f=f1).V)
@@ -1085,8 +1085,11 @@ class space:
                     scale = space().scale_burn(o3.update(f=(phi2-o3.omega)%360),o2)
                 option1.loc[0,'deltaV']=(scale-1)*norm(o3.V)
                 option1.loc[0,'orbit']=o3.update(V=o3.V*scale).copy()
-
-                phi5=space().orb_inters(o3,o2,phi2+180)
+                
+                try:
+                    phi5=space().orb_inters(o3,o2,phi2+180)
+                except RuntimeError:
+                    phi5=space().orb_paral(o3,o2,phi2+180)
                 option1.loc[1,'f']=(phi5-o3.omega)%360
                 option1.loc[1,'time']="%02d:%02d:%05.2f" %s2hms((o3.copy().update(f=(phi5-o3.omega)%360).M-o3.M)%360/360*o3.P+hms2s(*list(map(float,option1['time'].loc[0].split(':')))))
                 o3.update(f=(phi5-o3.omega)%360);
@@ -1109,8 +1112,11 @@ class space:
                     scale = space().scale_burn(o3.update(f=(phi4-o3.omega)%360),o2)
                 option2.loc[0,'deltaV']=(scale-1)*norm(o3.V)
                 option2.loc[0,'orbit']=o3.update(V=o3.V*scale).copy()
-
-                phi6=space().orb_inters(o3,o2,phi4+180)
+                
+                try:
+                    phi6=space().orb_inters(o3,o2,phi4+180)
+                except RuntimeError:
+                    phi6=space().orb_paral(o3,o2,phi4+180)
                 option2.loc[1,'f']=(phi6-o3.omega)%360
                 option2.loc[1,'time']="%02d:%02d:%05.2f" %s2hms((o3.copy().update(f=(phi6-o3.omega)%360).M-o3.M)%360/360*o3.P+hms2s(*list(map(float,option2['time'].loc[0].split(':')))))
                 o3.update(f=(phi6-o3.omega)%360);
@@ -1168,7 +1174,8 @@ class space:
             useful.append(idmin)
 
         output = output.append({'step':'Final','f':o2.f,'deltaV':0},ignore_index=True)
-        output['orbit'].iloc[-1]=output['orbit'].loc[idmin].copy().update(f=o2.f)
+        o3 = output['orbit'].loc[idmin]
+        output['orbit'].iloc[-1]=o3.copy().update(f=o2.f+o2.omega-o3.omega)
         output['time'].iloc[-1] = "%02d:%02d:%05.2f" %s2hms((output['orbit'].iloc[-1].M-output['orbit'].loc[idmin].M)%360/360*o2.P+hms2s(*list(map(float,output['time'].loc[idmin].split(':')))))
 
         useful.append(output.index[-1])
