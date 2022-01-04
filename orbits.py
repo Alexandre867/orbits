@@ -867,7 +867,7 @@ class space:
         h2=np.cross(*o2.rv())
         h3=np.cross(h1,h2)
         orb_out = orbit(a=o1.a,e=o1.e,i=o2.i,omega=space().orb_plane_inters(o1,o2),Omega=o2.Omega,f=o1.f)
-        omega = space().R2f(orb_out,h3) # Exchanging f and omega in the formula allows to find one or the other; see note under R2f.
+        omega = space().R2f(orb_out,h3,supp_warn=True) # Exchanging f and omega in the formula allows to find one or the other; see note under R2f.
         if new_orbit: return orb_out.update(omega=omega)
         return omega%360
 #         theta = np.arctan2(np.sqrt(h3[0]**2+h3[1]**2),h3[2])
