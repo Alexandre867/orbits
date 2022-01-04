@@ -925,7 +925,7 @@ class space:
             phi1=space().orb_inters(o1,o2,guess)
             phi2=space().orb_paral(o1,o2,o1.f+o1.omega+180)
             return 180-abs(180-abs(phi1-phi2)%360)
-        except Exception: # It's ok to use Exception instead of RuntimeError to ignore actual runtime error from scipy.optimize.fsolve
+        except (RuntimeError,TypeError): # It's ok to use Exception instead of RuntimeError to ignore actual runtime error from scipy.optimize.fsolve
             return 180
 
     def _impulse_func(self,scale,o1,o2,guess=0):
@@ -934,12 +934,17 @@ class space:
         """
         return space()._diff_int_par(o1.copy().update(V=o1.V*scale),o2,guess)
     
-    def scale_burn(self,o1,o2,guess=1):
+    def scale_burn(self,o1,o2,guess=None):
         """
         How much to multiply the velocity of orbit o1 to make it tangential to
         orbit o2.
         """
-        return fsolve(space()._impulse_func,guess,(o1,o2))[0]
+        if guess is None:
+            if o1.a>o2.a:
+                guess = (o1.mu*(2/norm(o1.R)-2/(o1.ap+o2.pe)))**(1/2)/norm(o1.V)
+            else:
+                guess = (o1.mu*(2/norm(o1.R)-2/(o1.pe+o2.ap)))**(1/2)/norm(o1.V)
+        return abs(fsolve(space()._impulse_func,guess,(o1,o2))[0])
     
     def phasing_orbits(self,orb,f,n=1,minR=6371+200,asap=False):
         """
@@ -1034,11 +1039,12 @@ class space:
 
         if not all(np.isclose([o1.a,o1.e,o1.omega],[o2.a,o2.e,o2.omega])): # No further orbit transfer if already the same.
             try:
-                phi1=space().orb_inters(o1,o2,0)
-                phi2=space().orb_paral(o1,o2,phi1)
-                if not np.isclose(phi1,phi2): phi3=space().orb_inters(o1,o2,phi2*2-phi1)
-                else: phi3=phi1
-                phi4=space().orb_paral(o1,o2,phi2+180)
+                with warnings.catch_warnings(record=True):
+                    phi1=space().orb_inters(o1,o2,0)
+                    phi2=space().orb_paral(o1,o2,phi1)
+                    if not np.isclose(phi1,phi2): phi3=space().orb_inters(o1,o2,phi2*2-phi1)
+                    else: phi3=phi1
+                    phi4=space().orb_paral(o1,o2,phi2+180)
 #         #         display(phi1,phi2,phi3,phi4)
             except RuntimeError:
                 asap=False
@@ -1074,8 +1080,8 @@ class space:
                 o3 = output['orbit'].loc[idmin].copy()
                 option1.loc[0,'f']=(phi2-o3.omega)%360
                 option1.loc[0,'time']="%02d:%02d:%05.2f" %s2hms((o3.copy().update(f=(phi2-o3.omega)%360).M-o3.M)%360/360*o3.P+hms2s(*list(map(float,output['time'].loc[idmin].split(':')))))
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore",category="RuntimeWarning")
+                with warnings.catch_warnings(record=True): #For restoring warnings filters upon exit.
+#                     warnings.simplefilter("ignore",category="RuntimeWarning")
                     scale = space().scale_burn(o3.update(f=(phi2-o3.omega)%360),o2)
                 option1.loc[0,'deltaV']=(scale-1)*norm(o3.V)
                 option1.loc[0,'orbit']=o3.update(V=o3.V*scale).copy()
@@ -1098,8 +1104,8 @@ class space:
                 o3 = output['orbit'].loc[idmin].copy()
                 option2.loc[0,'f']=(phi4-o3.omega)%360
                 option2.loc[0,'time']="%02d:%02d:%05.2f" %s2hms((o3.copy().update(f=(phi4-o3.omega)%360).M-o3.M)%360/360*o3.P+hms2s(*list(map(float,output['time'].loc[idmin].split(':')))))
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore",category="RuntimeWarning")
+                with warnings.catch_warnings(record=True):
+#                     warnings.simplefilter("ignore",category="RuntimeWarning")
                     scale = space().scale_burn(o3.update(f=(phi4-o3.omega)%360),o2)
                 option2.loc[0,'deltaV']=(scale-1)*norm(o3.V)
                 option2.loc[0,'orbit']=o3.update(V=o3.V*scale).copy()
