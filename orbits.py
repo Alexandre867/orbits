@@ -925,7 +925,7 @@ class space:
             phi1=space().orb_inters(o1,o2,guess)
             phi2=space().orb_paral(o1,o2,o1.f+o1.omega+180)
             return 180-abs(180-abs(phi1-phi2)%360)
-        except Exception: # It's ok to use Exception instead of RuntimeError to ignore actual runtime error from scipy.optimize.fsolve
+        except (RuntimeError,TypeError): # It's ok to use Exception instead of RuntimeError to ignore actual runtime error from scipy.optimize.fsolve
             return 180
 
     def _impulse_func(self,scale,o1,o2,guess=0):
