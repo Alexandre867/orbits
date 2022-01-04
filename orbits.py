@@ -1174,7 +1174,8 @@ class space:
             useful.append(idmin)
 
         output = output.append({'step':'Final','f':o2.f,'deltaV':0},ignore_index=True)
-        output['orbit'].iloc[-1]=output['orbit'].loc[idmin].copy().update(f=o2.f)
+        o3 = output['orbit'].loc[idmin]
+        output['orbit'].iloc[-1]=o3.copy().update(f=o2.f+o2.omega-o3.omega)
         output['time'].iloc[-1] = "%02d:%02d:%05.2f" %s2hms((output['orbit'].iloc[-1].M-output['orbit'].loc[idmin].M)%360/360*o2.P+hms2s(*list(map(float,output['time'].loc[idmin].split(':')))))
 
         useful.append(output.index[-1])
