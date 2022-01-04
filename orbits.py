@@ -718,6 +718,9 @@ class space:
 #         axis equal
 #         ax.axis('equal')
 #         ax.set_aspect(1)
+        ax.set_xlim(minv[0],maxv[0])
+        ax.set_ylim(minv[1],maxv[1])
+        ax.set_zlim(minv[2],maxv[2])
         ax.set_box_aspect(np.ptp(np.vstack([minv,maxv]),axis=0))
         ax.set_proj_type(proj)
 
