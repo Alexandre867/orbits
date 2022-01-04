@@ -1120,7 +1120,7 @@ class space:
                 option2.loc[1,'f']=(phi6-o3.omega)%360
                 option2.loc[1,'time']="%02d:%02d:%05.2f" %s2hms((o3.copy().update(f=(phi6-o3.omega)%360).M-o3.M)%360/360*o3.P+hms2s(*list(map(float,option2['time'].loc[0].split(':')))))
                 o3.update(f=(phi6-o3.omega)%360);
-                option2.loc[1,'deltaV']=(norm(o2.copy().update(f=phi5-o2.omega).V)/norm(o3.V)-1)*norm(o3.V)
+                option2.loc[1,'deltaV']=(norm(o2.copy().update(f=phi6-o2.omega).V)/norm(o3.V)-1)*norm(o3.V)
                 option2.loc[1,'orbit']=o3.dV(option2.loc[1,'deltaV']).copy()
 
                 deltaV_option2=sum(option2['deltaV'].map(norm))
