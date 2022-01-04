@@ -709,8 +709,8 @@ class space:
             ax.plot(R[0],R[1],R[2],marker='o',ms=10,mew=2,mec='b',mfc=[0,0,0,0])
 #             ax.quiver3D(R[0],R[1],R[2],V[0],V[1],V[2],length=vscale)
             V=R+V
-            minv=np.amin(np.vstack([V,minv]),axis=0)
-            maxv=np.amax(np.vstack([V,maxv]),axis=0)
+#             minv=np.amin(np.vstack([V,minv]),axis=0)
+#             maxv=np.amax(np.vstack([V,maxv]),axis=0)
             arrow = Arrow3D([R[0], V[0]], [R[1], V[1]], 
                         [R[2], V[2]], mutation_scale=20, #Arrow head size
                         lw=3, arrowstyle="-|>", color="r")
@@ -718,6 +718,9 @@ class space:
 #         axis equal
 #         ax.axis('equal')
 #         ax.set_aspect(1)
+        ax.set_xlim(minv[0],maxv[0])
+        ax.set_ylim(minv[1],maxv[1])
+        ax.set_zlim(minv[2],maxv[2])
         ax.set_box_aspect(np.ptp(np.vstack([minv,maxv]),axis=0))
         ax.set_proj_type(proj)
 
