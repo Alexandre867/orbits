@@ -26,7 +26,7 @@ Based off orbits.py, but with less features.
 - Planet orbital elements.ipynb: Downloads data about planets and plans an interplanetary transfer.
 - Anomalie moyenne - vraie.ipynb: Calculates the transformation from mean anomaly to true anomaly and formats it to be inputted in a LaTeX document.
 
-# Licence
-Making my code publically available, I am distributing it under Mozilla Public License 2.0.
+# License
+Making my code publicly available, I am distributing it under Mozilla Public License 2.0.
 
-This means essentially that you are free to use, modify, redistribute this code, but the original code and modifications must be open source and under this same License or other compatible license. This is file-based and does not apply to private use. See License for the full license, or https://www.mozilla.org/en-US/MPL/2.0/FAQ/ to understand the permitted uses.
+This means essentially that you are free to use, modify, redistribute this code, but the code and any modification to it must remain open source and under this same License or other compatible license; it is file-based and does not apply to private use. Copyright and license notices must be conserved. See [License](https://github.com/Alexandre867/orbits/blob/main/LICENSE) for the full license, or https://www.mozilla.org/en-US/MPL/2.0/FAQ/ to understand the permitted uses.
