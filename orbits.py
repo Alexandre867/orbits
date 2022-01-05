@@ -1120,7 +1120,7 @@ class space:
                 option2.loc[1,'f']=(phi6-o3.omega)%360
                 option2.loc[1,'time']="%02d:%02d:%05.2f" %s2hms((o3.copy().update(f=(phi6-o3.omega)%360).M-o3.M)%360/360*o3.P+hms2s(*list(map(float,option2['time'].loc[0].split(':')))))
                 o3.update(f=(phi6-o3.omega)%360);
-                option2.loc[1,'deltaV']=(norm(o2.copy().update(f=phi5-o2.omega).V)/norm(o3.V)-1)*norm(o3.V)
+                option2.loc[1,'deltaV']=(norm(o2.copy().update(f=phi6-o2.omega).V)/norm(o3.V)-1)*norm(o3.V)
                 option2.loc[1,'orbit']=o3.dV(option2.loc[1,'deltaV']).copy()
 
                 deltaV_option2=sum(option2['deltaV'].map(norm))
@@ -1153,7 +1153,7 @@ class space:
                 output['time'].iloc[-1]="%02d:%02d:%05.2f" %s2hms((0-o3.M)%360/360*o3.P+hms2s(*list(map(float,output['time'].loc[idmin].split(':')))))
                 o3.update(f=0);
             time = hms2s(*list(map(float,output['time'].iloc[-1].split(':'))))
-            f = space().predict(o2,time,rv=False)
+            f = space().predict(o2,time,rv=False)+o2.omega-o3.omega
 #         #     print(f)
             output['deltaV'].iloc[-1]=space().phasing_orbits(o3,f,n=n,minR=minR,asap=asap)
             output['orbit'].iloc[-1]=o3.dV(output['deltaV'].iloc[-1]).copy()
@@ -1172,6 +1172,10 @@ class space:
             deltaV_tot+=norm(output['deltaV'].iloc[-1])
             idmin=output.index[-1]
             useful.append(idmin)
+            
+            time = hms2s(*list(map(float,output['time'].iloc[-1].split(':'))))
+            f = space().predict(o2,time,rv=False)
+            dist=norm(o3.copy().R-o2.copy().update(f=f).R)
 
         output = output.append({'step':'Final','f':o2.f,'deltaV':0},ignore_index=True)
         o3 = output['orbit'].loc[idmin]
@@ -1183,7 +1187,7 @@ class space:
 #         # if output['orbit'].iloc[-1]!=o2: print("Orbit transfer calculations failed.")
 #         # else: print("Success!")
 
-        if full_output: return output,deltaV_tot,useful
+        if full_output: return output,(deltaV_tot,dist),useful
         else: 
             output = output.loc[useful].reset_index(drop=True)
             output.loc[output['step'].str.contains('Option 1: '),'step'] = output.loc[output['step'].str.contains('Option 1: '),'step'].map(lambda x: x.removeprefix("Option 1: "))
