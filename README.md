@@ -3,7 +3,9 @@ Repository for orbit programs and stuff.
 
 So I can stop wondering about tracking changes and allow for up to date version.
 
-Note: For downloading a file, click on `raw`, then `ctrl+s`. Make sure to select the right file type.
+Note: For downloading latest file, click on `raw`, then `ctrl+s`. Make sure to select the right file type.
+
+Otherwise, check under `Release`
 
 ## Python
 - orbits.py: Creates orbit class and space class for methods dealing with orbit instances. See documentation at the beginning of the file.
