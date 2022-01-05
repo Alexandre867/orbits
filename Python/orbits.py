@@ -1,11 +1,11 @@
+# Copyright (c) 2022 Alexandre Daigneault
+# 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
-Version 1.03
-
-By Alexandre Daigneault
+orbit v1.03
 
 Provides 'orbit' class objects and space() methods.
 Orbits and ground tracks assuming restricted 2-body problem conditions.
@@ -120,6 +120,14 @@ space class:
     
     - plot_orbit_transfer: new method that plots the data returned by orbit_transfer
     or make it ready to be plotted.
+    
+----- Update log 1.03 -----
+    - Correction of bugs
+    
+space class:
+    - orbit_transfer: Output with full_output=True modified: now returns 4 args:
+    output,useful,deltaV_tot,dist, where dist is the distance from the target
+    it reaches. dist=None if phasing=False.
 
 """
 
@@ -990,8 +998,9 @@ class space:
         asap: If true, calculates to minimize the transfer time. Otherwise,
         calculates towards minimizing delta V.
         output: pandas.DataFrame to output the data. Data appended inplace.
-        full_output: If true, returns the full output dataframe, the total delta V
-        and a list of index for the dataframe.
+        full_output: If true, returns the full output dataframe, a list of index
+        for the dataframe, the total delta V, and the distance from target it
+        reaches right after the second impulse for the phasing orbit.
         """
         o1=o1.copy()
         o2=o2.copy()
@@ -1000,6 +1009,7 @@ class space:
         deltaV_tot=0
         useful=[0]
         idmin=0
+        dist=None
 
         ## Initial
         output.loc[0]=['Initial',o1.f,'00:00:00',0,o1]
@@ -1191,7 +1201,7 @@ class space:
 #         # if output['orbit'].iloc[-1]!=o2: print("Orbit transfer calculations failed.")
 #         # else: print("Success!")
 
-        if full_output: return output,(deltaV_tot,dist),useful
+        if full_output: return output,useful,deltaV_tot,dist
         else: 
             output = output.loc[useful].reset_index(drop=True)
             output.loc[output['step'].str.contains('Option 1: '),'step'] = output.loc[output['step'].str.contains('Option 1: '),'step'].map(lambda x: x.removeprefix("Option 1: "))
