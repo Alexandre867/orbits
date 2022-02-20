@@ -129,10 +129,21 @@ space class:
     output,useful,deltaV_tot,dist, where dist is the distance from the target
     it reaches. dist=None if phasing=False.
 
+----- Update log 1.04 -----
+orbit class:
+    - TNB: Returns the TNB basis at the moment.
+    
+    - dV method can now take arguments in the other TNB components than tangential.
+    With fixed_frame = True, N and B components will affect the magnitude of the
+    velocity. Otherwise, only T changes the magnitude of the velocity. With
+    fixed_frame = False, only one component can be specified at the time for now.
+    
+space class:
+    - orbit_transfer now defaults to direct_incl = True and issues a warning
+    otherwise as it is only accurate for circular orbits.
 """
 
 import numpy as np
-import pandas as pd
 from numpy.linalg import norm
 from scipy.optimize import fsolve#, root
 import warnings
@@ -176,9 +187,11 @@ def hms2s(h,m,s):
     """
     return h*3600+60*m+s
 
+import pandas as pd
 def describe_orbit(orbit):
     """
     To print out nicely the orbital parameters and state vector of an 'orbit' object.
+    The only method that uses pandas library.
     """
     print(pd.Series(orbit.coe(),index=['a','e','i','Ω','ω','ν']),'\n')
     print(pd.DataFrame(list(orbit.rv()),index=['R','V'],columns=['x','y','z']))
@@ -390,13 +403,60 @@ class orbit:
             self.P=2*np.pi*(self.a**3/self.mu)**(1/2)
         self._update_elements = restore_update_elements
         return self
-    
-    def dV(self,dV):
+
+    def TNB(self):
+        """Return the current TNB basis."""
+        T_axis = self.V/norm(self.V)
+        B_axis = np.cross(*self.rv())/norm(np.cross(*self.rv()))
+        N_axis = np.cross(B_axis, T_axis)
+        return T_axis, N_axis, B_axis
+
+    def dV(self, dV=0, dVy=0, dVz=0, fixed_frame=False):
         """
-        Adds dV tangentially to the current velocity and return self.
+        Add a change in velocity.
+
+        For one argument, adds dV tangentially to the current velocity and
+        return self.
+        For length 3 iterable or by specifiying values for dVy and dVz, adds dV
+        in the Serret-Frenet or TNB frame.
+        With fixed_frame=True,
         """
-        return self.update(V=self.V/norm(self.V)*dV+self.V)
-    
+        try:
+            dVy = dV[1]
+            dVz = dV[2]
+            dV = dV[0]
+        except:
+            pass
+        T_axis, N_axis, B_axis = self.TNB()
+        if fixed_frame:
+            dV = T_axis*dV
+            dVy = N_axis*dVy
+            dVz = B_axis*dVz
+            return self.update(V=dV+dVy+dVz+self.V)
+        else:
+            if sum([not x for x in [dV, dVy, dVz]]) < 2:
+                raise NotImplementedError('Multiple components impulse with \
+                                          moving frame not implemented.')
+            V = norm(self.V)
+            phi = dVy/V
+            theta = dVz/V
+            V += dV
+
+            V_mat = np.array([V, 0, 0]).T
+            phi_mat = np.array([[np.cos(phi), -np.sin(phi), 0],
+                                [np.sin(phi), np.cos(phi), 0],
+                                [0, 0, 1]])
+            theta_mat = np.array([[np.cos(theta), 0, -np.sin(theta)],
+                                  [0, 1, 0],
+                                  [np.sin(theta), 0, np.cos(theta)]])
+            T_mat = phi_mat @ theta_mat @ V_mat
+            TNB_mat = np.vstack(self.TNB()).T
+#             # if dV: return self.update(V=T_axis*dV+self.V)
+#             # if dVy or dVz: raise NotImplementedError("It's just not implemented really.")
+            # print(TNB_mat @ T_mat)
+            # raise NotImplementedError("It's just not implemented really.")
+            return self.update(V=TNB_mat @ T_mat)
+
     @property
     def E(self):
         """
@@ -980,9 +1040,10 @@ class space:
         return dV2
     
 #####################################################
-    def orbit_transfer(self,o1,o2,direct_incl=False,phasing=False,n=1,minR=6371+100,asap=False,output=None,full_output=False):
+    def orbit_transfer(self,o1,o2,direct_incl=True,phasing=False,n=1,minR=6371+100,asap=False,output=None,full_output=False):
         """
         Calculates the transfer between two orbits.
+        
         By default, calculates to minimize the delta V. Note that increasing n
         can help minimize the delta V.
         
@@ -990,6 +1051,7 @@ class space:
         direct_incl: Affects the delta V for inclination change:
             False: Returns a delta V which needs to be applied normally
             northwardly (+) or southwardly (-) to the current orbit.
+            -> Note: Only accurate for nearly circular orbit.
             True: Returns a net delta V to pass directly from the initial orbit
             to the orbit on the orbit aligned with the target orbit.
         phasing: If True, calculates a phasing orbit (for rendezvous with target).
@@ -1029,7 +1091,9 @@ class space:
             output['time'].iloc[-1]="%02d:%02d:%05.2f" %s2hms((o1.copy().update(f=f2).M-o1.M)%360/360*o1.P+hms2s(*list(map(float,output['time'].loc[idmin].split(':')))))
             o3 = space().trans_orb_plane(o1,o2).update(f=f1)
             if direct_incl: output['deltaV'].iloc[-2]=o3.V-o1.copy().update(f=f1).V
-            else: output['deltaV'].iloc[-2]=norm(o3.V)*ang_bet(o3.V,o1.copy().update(f=f1).V)
+            else: 
+                warnings.warn('Only accurate for circular orbits.')
+                output['deltaV'].iloc[-2]=norm(o3.V)*ang_bet(o3.V,o1.copy().update(f=f1).V)
             output['orbit'].iloc[-2]=o3.copy()
 
             o3.update(f=f2)
