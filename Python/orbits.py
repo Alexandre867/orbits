@@ -404,7 +404,13 @@ class orbit:
         return self
 
     def TNB(self):
-        """Return the current TNB basis."""
+        """
+        Return the current TNB basis.
+        
+        T: Tangential to the velocity vector
+        N: Perpendicular to T in the plane defined by R and V, towards the planet.
+        B: In the angular momentum direction.
+        """
         T_axis = self.V/norm(self.V)
         B_axis = np.cross(*self.rv())/norm(np.cross(*self.rv()))
         N_axis = np.cross(B_axis, T_axis)
@@ -418,7 +424,10 @@ class orbit:
         return self.
         For length 3 iterable or by specifiying values for dVy and dVz, adds dV
         in the Serret-Frenet or TNB frame.
-        With fixed_frame=True,
+        With fixed_frame=True, the TNB frame is fixed, such that components in
+        N or B will affect the magnitude of the velocity.
+        Otherwise, they don't affect the magnitude of the velocity, but only
+        one component at a time can be given.
         """
         try:
             dVy = dV[1]
