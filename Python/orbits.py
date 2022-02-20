@@ -144,6 +144,7 @@ space class:
 """
 
 import numpy as np
+import pandas as pd
 from numpy.linalg import norm
 from scipy.optimize import fsolve#, root
 import warnings
@@ -187,11 +188,9 @@ def hms2s(h,m,s):
     """
     return h*3600+60*m+s
 
-import pandas as pd
 def describe_orbit(orbit):
     """
     To print out nicely the orbital parameters and state vector of an 'orbit' object.
-    The only method that uses pandas library.
     """
     print(pd.Series(orbit.coe(),index=['a','e','i','Ω','ω','ν']),'\n')
     print(pd.DataFrame(list(orbit.rv()),index=['R','V'],columns=['x','y','z']))
